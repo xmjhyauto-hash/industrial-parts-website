@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     })
 
     // Upload to Cloudinary
-    const result = await new Promise<cloudinary.UploadApiResponse>((resolve, reject) => {
+    const result = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: 'industrial-parts',
