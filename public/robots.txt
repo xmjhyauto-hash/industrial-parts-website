@@ -1,0 +1,21 @@
+# Industrial Parts Website - robots.txt
+
+User-agent: *
+Allow: /
+
+# Disallow admin and API paths
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login/
+
+# Sitemap
+Sitemap: https://yourdomain.com/sitemap.xml
+
+# Crawl-delay (optional, be nice to small sites)
+Crawl-delay: 10
+
+---
+# Additional bot protection notes:
+# - The /api/ paths return rate-limited responses
+# - Honeypot fields detect automated bots
+# - Login attempts are rate-limited per IP

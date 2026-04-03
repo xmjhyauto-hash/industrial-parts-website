@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  image       String?
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  products    Product[]
+  showInMenu  Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Product {
+  id               String    @id @default(cuid())
+  name             String
+  slug             String    @unique
+  model            String?
+  brand            String?
+  description      String?
+  specifications   String?
+  images           String    @default("[]")
+  categoryId       String
+  category         Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  metaTitle        String?
+  metaDescription  String?
+  featured         Boolean   @default(false)
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([brand])
+  @@index([featured])
+  @@index([categoryId])
+  @@index([createdAt])
+}
+
+// FTS5 Virtual Table for full-text search (created via raw SQL)
+// FTS5 table is not managed by Prisma migrations - created separately
+// Triggers maintain sync between Product table and product_fts
+
+model SiteSettings {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  role      String   @default("staff") // admin, staff
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model VisitorLog {
+  id        String   @id @default(cuid())
+  ip        String?
+  path      String
+  method    String
+  userAgent String?
+  referer   String?
+  visitedAt  DateTime @default(now())
+}
+
+model VisitorMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  message   String
+  ip        String?
+  userAgent String?
+  status    String   @default("new") // new, read, replied, closed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Brand {
+  id       String   @id @default(cuid())
+  name     String
+  logo     String   @default("")
+  url      String   @default("")
+  sortOrder Int     @default(0)
+  active   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Inquiry {
+  id          String   @id @default(cuid())
+  productId   String
+  productName String
+  productModel String?
+  productBrand String?
+  customerEmail String
+  customerMessage String?
+  ip          String?
+  userAgent   String?
+  status      String   @default("new") // new, read, replied, closed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Article {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  icon        String    @default("Settings") // Icon name from lucide-react
+  sortOrder   Int       @default(0)
+  active      Boolean   @default(true)
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
