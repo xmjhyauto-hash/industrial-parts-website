@@ -12,6 +12,7 @@
     "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.2",
     "@prisma/client": "^5.14.0",
     "@types/redis": "^4.0.10",
     "archiver": "^7.0.1",
