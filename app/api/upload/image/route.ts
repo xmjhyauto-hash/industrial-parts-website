@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir, unlink } from 'fs/promises'
-import { join } from 'path'
-import { existsSync } from 'fs'
+import { v2 as cloudinary } from 'cloudinary'
 import { processImage } from '@/lib/image-processing'
 import { prisma } from '@/lib/prisma'
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dhiign7vt',
+  api_key: process.env.CLOUDINARY_API_KEY || '',
+  api_secret: process.env.CLOUDINARY_API_SECRET || '',
+})
 
 async function getWatermarkSettings() {
   try {
@@ -50,17 +55,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 })
     }
 
-    // Create uploads directory
-    const uploadDir = join(process.cwd(), 'public', 'uploads')
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true })
-    }
-
-    // Generate unique filename
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const filename = `product-${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
-    const filepath = join(uploadDir, filename)
-
     // Get watermark settings
     const wmSettings = await getWatermarkSettings()
 
@@ -79,11 +73,26 @@ export async function POST(request: Request) {
       } : undefined,
     })
 
-    await writeFile(filepath, processedBuffer)
+    // Upload to Cloudinary
+    const result = await new Promise<cloudinary.UploadApiResponse>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'industrial-parts',
+          resource_type: 'image',
+          public_id: `product-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        },
+        (error, result) => {
+          if (error) reject(error)
+          else if (result) resolve(result)
+          else reject(new Error('Upload failed'))
+        }
+      )
+      uploadStream.end(processedBuffer)
+    })
 
-    const url = `/uploads/${filename}`
+    const url = result.secure_url
 
-    return NextResponse.json({ url, filename })
+    return NextResponse.json({ url, filename: result.public_id })
   } catch (error) {
     console.error('Image upload error:', error)
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
@@ -99,19 +108,17 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 })
     }
 
-    // Only allow deleting files from /uploads/
-    if (!url.startsWith('/uploads/')) {
-      return NextResponse.json({ error: 'Invalid file path' }, { status: 400 })
+    // Extract public_id from Cloudinary URL
+    const publicIdMatch = url.match(/\/industrial-parts\/([^.]+)/)
+    if (!publicIdMatch) {
+      return NextResponse.json({ error: 'Invalid Cloudinary URL' }, { status: 400 })
     }
 
-    const filepath = join(process.cwd(), 'public', url)
+    const publicId = `industrial-parts/${publicIdMatch[1]}`
 
-    if (existsSync(filepath)) {
-      await unlink(filepath)
-      return NextResponse.json({ success: true })
-    } else {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 })
-    }
+    await cloudinary.uploader.destroy(publicId)
+
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Image delete error:', error)
     return NextResponse.json({ error: 'Delete failed' }, { status: 500 })
