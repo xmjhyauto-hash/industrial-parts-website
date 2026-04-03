@@ -23,6 +23,9 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  verification: {
+    google: 'pAAU6DiToSkhLlRmIjvGRT_NtlL-xnduOF02QaN3h7o',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
