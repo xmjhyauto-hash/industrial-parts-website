@@ -1,8 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { TranslatedHome } from '@/components/TranslatedHome'
 
-// ISR: Revalidate every hour
-export const revalidate = 3600
+// ISR: Revalidate every minute
+export const revalidate = 60
 
 // Default hero content
 const defaultHero = {

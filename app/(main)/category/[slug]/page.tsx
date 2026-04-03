@@ -7,8 +7,8 @@ import { Pagination } from '@/components/ui/Pagination'
 
 const PRODUCTS_PER_PAGE = 12
 
-// ISR: Revalidate every hour
-export const revalidate = 3600
+// ISR: Revalidate every minute
+export const revalidate = 60
 
 interface CategoryPageProps {
   params: { slug: string }
